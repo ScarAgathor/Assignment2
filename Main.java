@@ -87,6 +87,6 @@ class MusicAlbum extends Media {
 
 class MediaManager {
     ArrayList<Media> products = new ArrayList<>();
-
+    int a = 2;
     
 }
