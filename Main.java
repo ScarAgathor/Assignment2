@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 
-public class Driver {
+public class Assignment2 {
 	
 	//global arrayList and variables to count totals of each type of item
 	static ArrayList<Item> stock = new ArrayList<>();
