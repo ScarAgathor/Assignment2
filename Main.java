@@ -32,7 +32,7 @@ public static void main(String []args) {
 		System.out.println("2 - Count the total number of Movies");
 		System.out.println("3 - Count the total number of TV Shows");
 		System.out.println("4 - Count the total number of Video Games");
-		System.out.println("5 - Count the total number of Music ALbums");
+		System.out.println("5 - Count the total number of Music Albums");
 		System.out.println("6 - Find the oldest product(by release year)");
 		
 		choice = s.nextInt();
