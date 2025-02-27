@@ -212,8 +212,23 @@ class Driver {
 	
 	public void findMostPopularAlbum() {
 	
+		int global_sales = 0;
+		int mostSales = 0;
+		String mostPopular = "";
+		String artist = "";
 		
-		
+		for(int i = 0; i< stock.size();i++) {
+			if(stock.get(i) instanceof Album) { //checks for instances of the album class
+				Album album = (Album) stock.get(i); //if the object at the current index is an album, a new album object is created by type casting the object in the stock array list  
+				global_sales = album.getGlobalSales();
+				if(global_sales > mostSales) {  //compares the global sales of the albums
+					mostSales = global_sales;
+					mostPopular = album.getTitle();
+					artist = album.getArtist();
+				}	
+			}
+		}
+		System.out.println("The most popular album in stock is " + mostPopular + " by " + artist + ", it sold " + mostSales + " copies.");
 	}
 
 	public void findMostPopularGame(){
