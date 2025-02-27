@@ -222,7 +222,7 @@ class Driver {
 		String mostPopularGame = "";
 
 		for (int i = 0; i < stock.size(); i++){
-			copiesSold = stock.get(i).getcopies_sold();
+			copiesSold = stock.get(i).getCopiesSold();
 			if ( copiesSold < most_CopiesSold ) {
 				most_CopiesSold = copiesSold;
 				mostPopularGame = stock.get(i).getTitle();
