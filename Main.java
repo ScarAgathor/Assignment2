@@ -34,6 +34,7 @@ public static void main(String []args) {
 		System.out.println("4 - Count the total number of Video Games");
 		System.out.println("5 - Count the total number of Music Albums");
 		System.out.println("6 - Find the oldest product(by release year)");
+		System.out.println("7 - Find the most popular Video Game(copies sold)");
 		
 		choice = s.nextInt();
 		
@@ -54,6 +55,9 @@ public static void main(String []args) {
 		}
 		if(choice == 6) {
 			d.findOldestProduct();
+		}
+		if(choice == 7) {
+			d.findMostPopularGame();
 		}
 	}
 	
@@ -210,6 +214,21 @@ class Driver {
 	
 		
 		
+	}
+
+	public void findMostPopularGame(){
+		int copiesSold = 0;
+		int most_CopiesSold = stock.get(0).getcopies_sold();
+		String mostPopularGame = "";
+
+		for (int i = 0; i < stock.size(); i++){
+			copiesSold = stock.get(i).getcopies_sold();
+			if ( copiesSold < most_CopiesSold ) {
+				most_CopiesSold = copiesSold;
+				mostPopularGame = stock.get(i).getTitle();
+			}
+		}
+		System.out.println("The most popular Video Game is " + mostPopularGame + " selling over " + most_CopiesSold + " million copies.");
 	}
 }
 
