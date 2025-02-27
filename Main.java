@@ -1,8 +1,71 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Scanner;
 import java.util.ArrayList;
 
 public class Assignment2 {
+
+public static void main(String []args) {
 	
-	//global arrayList and variables to count totals of each type of item
+	int choice;
+	Driver d = new Driver();
+	Scanner s = new Scanner(System.in);
+	
+		//fix this to allow all .csv files as opposed to just this one
+		String file = "dataset.csv";
+		
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))){
+			String line; //one line of all the data of one specific movie/show/game/album
+			while((line = reader.readLine()) != null) {	
+				d.determineType(line);
+			}
+			
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println("What would you like to do?");
+		System.out.println("1 - Count the total number of products");
+		System.out.println("2 - Count the total number of Movies");
+		System.out.println("3 - Count the total number of TV Shows");
+		System.out.println("4 - Count the total number of Video Games");
+		System.out.println("5 - Count the total number of Music ALbums");
+		System.out.println("6 - Find the oldest product(by release year)");
+		
+		choice = s.nextInt();
+		
+		if (choice == 1) {
+			d.totalProducts();
+		}
+		if (choice == 2) {
+			d.printTotalMovies();
+		}
+		if (choice == 3) {
+			d.printTotalShows();
+		}
+		if(choice == 4) {
+			d.printTotalGames();
+		}
+		if(choice == 5) {
+			d.printTotalAlbums();
+		}
+		if(choice == 6) {
+			d.findOldestProduct();
+		}
+	}
+	
+}
+
+
+
+
+
+class Driver {
+	
+	//array lists for each type of item 
+	
+	
 	static ArrayList<Item> stock = new ArrayList<>();
 	private static int totalMovies = 0;
 	private static int totalGames = 0;
@@ -17,8 +80,10 @@ public class Assignment2 {
 		
 		Item movie = new Movie(id, itemInfo[2], itemInfo[3], itemInfo[4], release_year,itemInfo[6], duration, itemInfo[8]);
 		stock.add(movie);
-		
 		totalMovies++;
+		//stock.add(movie);
+		
+		
 	}
 	
 	public static void createNewShow(String[] itemInfo) {
@@ -28,8 +93,9 @@ public class Assignment2 {
 		
 		Item show = new Show(id, itemInfo[2], itemInfo[3], itemInfo[4], release_year,itemInfo[6], itemInfo[7], itemInfo[8]);
 		stock.add(show);
-		
 		totalShows++;
+		
+		
 		
 	}
 	
@@ -41,8 +107,9 @@ public class Assignment2 {
 		
 		Item game = new Game(id, itemInfo[2], itemInfo[3], release_year, itemInfo[5], itemInfo[6], copies_sold);
 		stock.add(game);
-		
 		totalGames++;
+		
+		
 	}
 
 	public static void createNewAlbum(String[] itemInfo) {
@@ -55,8 +122,9 @@ public class Assignment2 {
 		
 		Item album = new Album(id, release_year, itemInfo[3], itemInfo[4], global_sales, tracks, duration, itemInfo[8]);
 		stock.add(album);
-		
 		totalAlbums++;
+		
+		
 		
 	}
 
@@ -96,6 +164,7 @@ public class Assignment2 {
 	}
 	
 	public void totalProducts() {
+		
 		System.out.println("there are " + stock.size() + " products in stock");
 	}
 	
@@ -115,12 +184,6 @@ public class Assignment2 {
 		System.out.println("There are " + totalAlbums + " albums in stock");
 	}
 	
-	public void printList() {
-		
-		for (int i = 0; i < stock.size(); i++) {
-			System.out.println(stock.get(i));
-		}
-	}
 	
 	public void findOldestProduct() {
 	
@@ -142,15 +205,8 @@ public class Assignment2 {
 	}
 	
 	public void findMostPopularAlbum() {
+	
 		
-	}
-	
-	
-	public void printInfo() {
-		
-	}
-	
-	public static void main(String []args) {
 		
 	}
 }
@@ -320,5 +376,4 @@ class Item{
 		}
 	}
 
-	
 	
