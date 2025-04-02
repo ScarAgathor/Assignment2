@@ -1,0 +1,318 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.ArrayList;
+
+
+
+public class Assignment3 {
+
+	public static void main(String[] args) {
+		
+		Manager m;
+		Patient patient = new Patient(000, "null", "null", "null", "null","null");
+		Staff staff = new Staff (000, "null","null","null","null","null");
+		do {
+		m = Login.login();
+		//checks if the logged in user is a patient or staff
+		if(m.getUserType() == 0) {
+			System.out.println("patient");
+			patient = (Patient)m.getCurrentUser();
+		}
+		
+		if(m.getUserType() == 1) {
+			System.out.println("staff");
+			staff = (Staff)m.getCurrentUser();
+		}
+		
+		if(m.getUserType() == -1){
+			System.out.println("No user found, please re-enter username and password");
+			
+		}
+		
+		}while(m.getUserType() == -1);
+		
+		//move this so its only created if staff login
+		ArrayList<Patient> patients = m.loadPatients();
+		
+		//printing for testing purposes
+		for(int i = 0; i < patients.size();i++) {
+		System.out.println(patients.get(i).getid() + " " + patients.get(i).getUsername() + " " + patients.get(i).getPassword() + " " + patients.get(i).getName() + " " + patients.get(i).getEmail() + " " + patients.get(i).getTreatmentNotes());
+		}
+		
+		System.out.println(patient.getTreatmentNotes());
+		System.out.println(patient.getName());
+	}
+	
+}
+
+abstract class User{ //idk if this needs to be abstract or not
+	
+	Scanner scan = new Scanner(System.in);
+	
+	private int id;
+	private String username;
+	private String password;
+	private String name;
+	private String email;
+	
+	User(int id, String username, String password, String name, String email){
+		this.id = id;
+		this.username = username;
+		this.password = password;
+		this.name = name;
+		this.email = email;
+	}
+	int getid() {
+		return id;
+	}
+	String getUsername() {
+		return username;
+	}
+	String getPassword() {
+		return password;
+	}
+	String getName() {
+		return name;
+	}
+	
+	void setName() {
+		System.out.println("enter name");
+		name = scan.nextLine();
+	}
+	
+	String getEmail() {
+		return email;
+	}
+	
+}
+
+ class Patient extends User{
+	
+	private String treatment_notes;
+	
+	Patient(int id, String username, String password, String name, String email, String treatment_notes){
+		super(id, username, password, name, email);
+		this.treatment_notes = treatment_notes;	
+	}
+	String getTreatmentNotes() {
+		return treatment_notes;
+	}
+}
+
+ class Staff extends User{
+	private String department;
+
+	Staff(int id, String username, String password, String name, String email, String department){
+		super(id, username, password, name, email);
+		this.department = department;
+	}
+	
+	String getDepartment() {
+		return department;
+	}
+}
+
+class Manager{
+	
+	private int userType;
+	private User currentUser;
+	
+	ArrayList<Patient> patients = new ArrayList<>();
+	
+	Manager(int userType, User currentUser) {
+		
+		this.userType = userType;
+		this.currentUser = currentUser;
+		
+	}
+	
+	int getUserType() {
+		return userType;
+	}
+	
+	ArrayList<Patient> loadPatients() {
+		//creates array list of all patients
+		String file = "patient.csv"; 
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                
+            	String[] info = line.split(",");
+            	Patient patient = new Patient(Integer.parseInt(info[0]), info[1], info[2], info[3], info[4], info[5]);
+            	
+            	patients.add(patient);
+            }
+        }catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+        
+        sortPatients(patients);
+        
+        
+	return patients;	
+	}
+	
+	User getCurrentUser() {
+		return currentUser;
+	}
+	
+	void lookupPatient() {
+		
+	}
+	
+	void editCurrentPatient() {
+		
+	}
+	
+	ArrayList<Patient> sortPatients(ArrayList<Patient> patients){
+		//This part is broken af, supposed to sort patients by their id number from lowest to highest
+		Patient patient = patients.get(0);
+		int lowest = patient.getid();
+		Patient lowestPatient = patients.get(1);
+		Patient temp = patients.get(0);
+		int current = 0;
+		Patient temp2 = patients.get(0);
+		
+		for (int i = 0; i < patients.size(); i++) {
+			patient = patients.get(i);
+			System.out.print(patient.getName() + " ");
+			current = patient.getid();
+			System.out.println(current);
+			
+			for(int j = i+1; j< patients.size(); j++) {
+				
+				temp = patients.get(j);
+				System.out.println("temp - " + temp.getid());
+				
+				if(temp.getid() < lowest) {
+				
+					lowest = patient.getid();
+					temp2 = patient;
+					lowestPatient = temp;
+					
+					
+					patients.set(i, temp);
+					patients.set(j, temp2);
+					
+					
+					
+				}
+				
+			}
+		}
+		
+		
+		return patients;
+	}
+	
+}
+
+
+
+class Login{
+	
+	static Manager login(){
+		Scanner scanner = new Scanner(System.in);
+		
+		
+        System.out.println("Enter username: ");
+        String username = scanner.nextLine();
+        System.out.println("Enter password: ");
+        String password = scanner.nextLine();
+        boolean passwordMatch = false;
+        boolean usernameMatch = false;
+
+        /* reads through both files and checks boolean values if there is a match, if both values are true
+         * at the same time, then the user is logged in and a new patient or staff object is created and passed
+         * through a new manager object to the driver class (Assignment3)*/
+        
+        //reads through patients file
+        String file = "patient.csv"; 
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                
+            	String[] info = line.split(",");
+            	
+            	if (username.equals(info[1])) {
+                    usernameMatch = true;
+                } 
+            	else {
+                    usernameMatch = false;
+                }
+            	
+            	if(password.equals(info[2])) {
+            		passwordMatch = true;
+            	}
+            	else {
+                    passwordMatch = false;
+                }
+            	
+            	if(usernameMatch && passwordMatch) {
+            		System.out.println("Successful login");
+            		Patient patient = new Patient(Integer.parseInt(info[0]), info[1],info[2],info[3],info[4],info[5]);
+            		Manager m = new Manager(0, patient);
+            		
+            		return m;
+            		
+            		
+            	}
+            }
+            
+            
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+        
+        //reads through staff file
+        file = "medicalstaff.csv"; 
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                
+            	String[] info = line.split(",");
+            	
+            	if (username.equals(info[1])) {
+                    usernameMatch = true;
+                } 
+            	else {
+                    usernameMatch = false;
+                }
+            	
+            	if(password.equals(info[2])) {
+            		passwordMatch = true;
+            	}
+            	else {
+                    passwordMatch = false;
+                }
+            	
+            	if(usernameMatch && passwordMatch) {
+            		System.out.println("Successful login");
+            		Staff staff = new Staff(Integer.parseInt(info[0]), info[1],info[2],info[3],info[4],info[5]);
+            		Manager m = new Manager(0, staff);
+            		return m;
+            		
+            	}
+            }
+            
+            
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+        
+        //returned if somehow no user is found and the system doesn't ask the user to re-enter their username and password
+        User error = new Patient(000, "error","error","error","error","error");
+		Manager m = new Manager(-1, error);
+		
+		return m;
+        
+	}
+	
+	
+}
+	
