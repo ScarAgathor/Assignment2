@@ -13,6 +13,9 @@ public class Assignment3 {
 		Manager m;
 		Patient patient = new Patient(000, "null", "null", "null", "null","null");
 		Staff staff = new Staff (000, "null","null","null","null","null");
+		int choice;
+		
+		
 		do {
 		m = Login.login();
 		//checks if the logged in user is a patient or staff
@@ -43,6 +46,49 @@ public class Assignment3 {
 		
 		System.out.println(patient.getTreatmentNotes());
 		System.out.println(patient.getName());
+		
+		Scanner scan = new Scanner(System.in);
+		
+		
+		do{
+			System.out.println("Please choose from the options what you would like to do");
+		
+		System.out.println("1 - view current users profile");
+		System.out.println("2 - lookup specific user");
+		System.out.println("3 - edit current user");
+		System.out.println("4 - sign out");
+		choice = scan.nextInt();
+		
+		switch (choice) {
+		case 1:
+			m.printCurrentViewed();
+			break;
+		case 2:
+			try{
+				m.lookupPatient();
+			}
+			catch(Exception e) {
+				System.err.println("only staff can view patient files, please choose another option");
+			}
+			
+			break;
+		case 3:
+			m.editCurrentPatient();
+			break;
+		case 4:
+			System.out.println("goodbye");
+			break;
+		default:
+			System.out.println("please choose one of the listed options");
+			System.out.println("1 - view current users profile");
+			System.out.println("2 - lookup specific user");
+			System.out.println("3 - edit current user");
+			System.out.println("4 - sign out");
+			choice = scan.nextInt();
+			
+		}
+		
+		}while(choice != 4); 
 	}
 	
 }
@@ -118,13 +164,14 @@ class Manager{
 	
 	private int userType;
 	private User currentUser;
-	
+	private User currentViewed;
 	ArrayList<Patient> patients = new ArrayList<>();
 	
-	Manager(int userType, User currentUser) {
+	Manager(int userType, User currentUser, User currentViewed) {
 		
 		this.userType = userType;
 		this.currentUser = currentUser;
+		this.currentViewed = currentViewed;
 		
 	}
 	
@@ -158,8 +205,98 @@ class Manager{
 	User getCurrentUser() {
 		return currentUser;
 	}
+	void setCurrentViewed(User user) {
+		currentViewed = user;
+	}
+	User getCurrentViewed() {
+		return currentViewed;
+	}
+	int getCurrentViewedType() {
+		
+		int currentViewedType = -1;
+		
+		
+		if(getCurrentViewed() instanceof Patient) {
+			currentViewedType = 0;
+		}
+		if(getCurrentViewed() instanceof Staff) {
+			currentViewedType = 1;
+		}
+		
+		System.out.println(currentViewedType);
+		
+		return currentViewedType;
+	}
 	
-	void lookupPatient() {
+	void printCurrentViewed(){
+		
+		int userType = getCurrentViewedType();
+		
+		if(userType == 0) {
+		
+			Patient user = (Patient)getCurrentViewed();
+		
+			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getTreatmentNotes());
+		}
+		
+		if(userType == 1) {
+			
+			Staff user = (Staff)getCurrentViewed();
+			
+			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getDepartment());
+		}
+
+	}
+	
+	void printCurrentUser() {
+		int userType = getUserType();
+		
+		if(userType == 0) {
+		
+			Patient user = (Patient)getCurrentUser();
+		
+			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getTreatmentNotes());
+		}
+		
+		if(userType == 1) {
+			
+			Staff user = (Staff)getCurrentUser();
+			
+			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getDepartment());
+		}
+	}
+	
+	void lookupPatient() throws Exception{
+	
+		int id = 0;
+		
+		if(getUserType() == 0) {
+			Exception e = new Exception("Error, only staff can search patient files");
+			throw e;
+		}
+		
+		else {
+			System.out.println("please enter user id: ");
+			Scanner scan = new Scanner(System.in);
+			id = scan.nextInt();
+			
+		}
+		
+		//for testing only, needs to be binary search
+		for(int i = 0; i < patients.size(); i++) {
+			if(patients.get(i).getid() == id) {
+				setCurrentViewed(patients.get(i));
+				break;
+			}
+			//create an exception if no id is found
+		}
+		
+
+		System.out.println(getCurrentViewed());
+		
+		
+		
+		
 		
 	}
 	
@@ -215,13 +352,13 @@ class Manager{
 class Login{
 	
 	static Manager login(){
-		Scanner scanner = new Scanner(System.in);
+		Scanner scan = new Scanner(System.in);
 		
 		
         System.out.println("Enter username: ");
-        String username = scanner.nextLine();
+        String username = scan.nextLine();
         System.out.println("Enter password: ");
-        String password = scanner.nextLine();
+        String password = scan.nextLine();
         boolean passwordMatch = false;
         boolean usernameMatch = false;
 
@@ -255,7 +392,7 @@ class Login{
             	if(usernameMatch && passwordMatch) {
             		System.out.println("Successful login");
             		Patient patient = new Patient(Integer.parseInt(info[0]), info[1],info[2],info[3],info[4],info[5]);
-            		Manager m = new Manager(0, patient);
+            		Manager m = new Manager(0, patient,patient);
             		
             		return m;
             		
@@ -294,8 +431,14 @@ class Login{
             	if(usernameMatch && passwordMatch) {
             		System.out.println("Successful login");
             		Staff staff = new Staff(Integer.parseInt(info[0]), info[1],info[2],info[3],info[4],info[5]);
-            		Manager m = new Manager(0, staff);
+            		Manager m = new Manager(1, staff,staff);
+            		
+            		System.out.println(staff instanceof Staff);
+            		
+            		
             		return m;
+            		
+            		
             		
             	}
             }
@@ -307,12 +450,24 @@ class Login{
         
         //returned if somehow no user is found and the system doesn't ask the user to re-enter their username and password
         User error = new Patient(000, "error","error","error","error","error");
-		Manager m = new Manager(-1, error);
+		Manager m = new Manager(-1, error,error);
 		
 		return m;
         
 	}
 	
 	
+	
+	class Exception{
+		
+		String s;
+		
+		Exception(String s){
+			this.s = s;
+		}
+	}
+	
 }
+
+
 	
