@@ -3,471 +3,603 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 
+public class HospitalManager {
 
-public class Assignment3 {
+    public static void main(String[] args) {
+        Scanner scan = new Scanner(System.in);
 
-	public static void main(String[] args) {
-		
-		Manager m;
-		Patient patient = new Patient(000, "null", "null", "null", "null","null");
-		Staff staff = new Staff (000, "null","null","null","null","null");
-		int choice;
-		
-		
-		do {
-		m = Login.login();
-		//checks if the logged in user is a patient or staff
-		if(m.getUserType() == 0) {
-			System.out.println("patient");
-			patient = (Patient)m.getCurrentUser();
-		}
-		
-		if(m.getUserType() == 1) {
-			System.out.println("staff");
-			staff = (Staff)m.getCurrentUser();
-		}
-		
-		if(m.getUserType() == -1){
-			System.out.println("No user found, please re-enter username and password");
-			
-		}
-		
-		}while(m.getUserType() == -1);
-		
-		//move this so its only created if staff login
-		ArrayList<Patient> patients = m.loadPatients();
-		
-		//printing for testing purposes
-		for(int i = 0; i < patients.size();i++) {
-		System.out.println(patients.get(i).getid() + " " + patients.get(i).getUsername() + " " + patients.get(i).getPassword() + " " + patients.get(i).getName() + " " + patients.get(i).getEmail() + " " + patients.get(i).getTreatmentNotes());
-		}
-		
-		System.out.println(patient.getTreatmentNotes());
-		System.out.println(patient.getName());
-		
-		Scanner scan = new Scanner(System.in);
-		
-		
-		do{
-			System.out.println("Please choose from the options what you would like to do");
-		
-		System.out.println("1 - view current users profile");
-		System.out.println("2 - lookup specific user");
-		System.out.println("3 - edit current user");
-		System.out.println("4 - sign out");
-		choice = scan.nextInt();
-		
-		switch (choice) {
-		case 1:
-			m.printCurrentViewed();
-			break;
-		case 2:
-			try{
-				m.lookupPatient();
-			}
-			catch(Exception e) {
-				System.err.println("only staff can view patient files, please choose another option");
-			}
-			
-			break;
-		case 3:
-			m.editCurrentPatient();
-			break;
-		case 4:
-			System.out.println("goodbye");
-			break;
-		default:
-			System.out.println("please choose one of the listed options");
-			System.out.println("1 - view current users profile");
-			System.out.println("2 - lookup specific user");
-			System.out.println("3 - edit current user");
-			System.out.println("4 - sign out");
-			choice = scan.nextInt();
-			
-		}
-		
-		}while(choice != 4); 
-	}
-	
+        Manager m;
+        Patient patient = null; //just changed it to null - it does the same thing
+        Staff staff = null;
+        int choice;
+
+
+        do { //login
+            m = Login.login(scan);
+
+            // Determine user type after login
+            if (m.getUserType() == 0) { // Patient
+                System.out.println("Logged in as Patient.");
+                patient = (Patient) m.getCurrentUser();
+            } else if (m.getUserType() == 1) { // Staff
+                System.out.println("Logged in as Medical Staff.");
+                staff = (Staff) m.getCurrentUser();
+            } else {
+                System.out.println("Login failed. Please re-enter username and password.");
+            }
+
+        } while (m.getUserType() == -1); // Keep asking until there is a successful login
+
+        //this will only be created if it is a staff login
+        ArrayList<Patient> patients = new ArrayList<>();
+        if (m.getUserType() == 1) {
+            patients = m.loadPatients();
+
+            System.out.println("\n--- Loaded Patients ---");
+            for (Patient p : patients) {
+                System.out.println(p.getId() + " | " + p.getUsername() + " | " +
+                        p.getPassword() + " | " + p.getName() + " | " + p.getEmail() +
+                        " | " + p.getTreatmentNotes());
+            }
+        }
+
+        //printing for testing purposes
+        if (patient != null) {
+            System.out.println("\nCurrent Patient Info:");
+            System.out.println(patient.getName());
+            System.out.println(patient.getTreatmentNotes());
+        }
+
+        showMainMenu(scan, m, patients);
+
+        scan.close();
+    }
+
+    //MainMenu
+    private static void showMainMenu(Scanner scan, Manager m, ArrayList<Patient> patients) {
+        int choice;
+        do {
+            System.out.println("\nPlease choose from the options what you would like to do");
+            System.out.println("1 - View current user's profile");
+            System.out.println("2 - Look up a specific patient (staff only)");
+            System.out.println("3 - Edit current user");
+            System.out.println("4 - Sign out");
+            System.out.println("5 - Generate report");
+            System.out.print("Enter choice: ");
+
+            while (!scan.hasNextInt()) {
+                System.out.print("Invalid input. Enter a number: ");
+                scan.next();
+            }
+
+            choice = scan.nextInt();
+            scan.nextLine();
+
+            switch (choice) {
+                case 1:
+                    m.printCurrentViewed();
+                    break;
+                case 2:
+                    try {
+                        m.lookupPatient();
+                    } catch (Exception e) {
+                        System.err.println("Access denied: only staff can view patient files.");
+                    }
+                    break;
+                case 3:
+                    m.editCurrentPatient();
+                    break;
+                case 4:
+                    System.out.println("Signing out. Goodbye!");
+                    break;
+                case 5:
+                    if (patients == null || patients.isEmpty()) {
+                        System.out.println("No patients loaded. Only staff can generate full reports.");
+                    } else {
+                        Report.generateReport(patients, m.getCurrentUser(), scan);
+                    }
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please select a number between 1 and 4.");
+            }
+        } while (choice != 4);
+    }
 }
 
-abstract class User{ //idk if this needs to be abstract or not
-	
-	Scanner scan = new Scanner(System.in);
-	
-	private int id;
-	private String username;
-	private String password;
-	private String name;
-	private String email;
-	
-	User(int id, String username, String password, String name, String email){
-		this.id = id;
-		this.username = username;
-		this.password = password;
-		this.name = name;
-		this.email = email;
-	}
-	int getid() {
-		return id;
-	}
-	String getUsername() {
-		return username;
-	}
-	String getPassword() {
-		return password;
-	}
-	String getName() {
-		return name;
-	}
-	
-	void setName() {
-		System.out.println("enter name");
-		name = scan.nextLine();
-	}
-	
-	String getEmail() {
-		return email;
-	}
-	
+// This should be abstract
+abstract class User {
+    private final int id;
+    private final String username;
+    private String password;
+    private String name;
+    private String email;
+
+    public User(int id, String username, String password, String name, String email) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.name = name;
+        this.email = email;
+    }
+
+    // Getters
+    public int getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    // Setters
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    // Used to return a formatted string of user info
+    public abstract String toString();
 }
 
- class Patient extends User{
-	
-	private String treatment_notes;
-	
-	Patient(int id, String username, String password, String name, String email, String treatment_notes){
-		super(id, username, password, name, email);
-		this.treatment_notes = treatment_notes;	
-	}
-	String getTreatmentNotes() {
-		return treatment_notes;
-	}
+class Patient extends User {
+
+    private String treatmentNotes;
+
+    Patient(int id, String username, String password, String name, String email, String treatmentNotes) {
+        super(id, username, password, name, email);
+        this.treatmentNotes = treatmentNotes;
+    }
+
+    String getTreatmentNotes() {
+        return treatmentNotes;
+    }
+
+    void setTreatmentNotes(String notes) {
+        this.treatmentNotes = notes;
+    }
+
+    // This overrides the abstract method in User
+    @Override
+    public String toString() {
+        return "Patient ID: " + getId() +
+                "\nUsername: " + getUsername() +
+                "\nName: " + getName() +
+                "\nEmail: " + getEmail() +
+                "\nTreatment Notes: " + treatmentNotes;
+    }
 }
 
- class Staff extends User{
-	private String department;
+class Staff extends User {
 
-	Staff(int id, String username, String password, String name, String email, String department){
-		super(id, username, password, name, email);
-		this.department = department;
-	}
-	
-	String getDepartment() {
-		return department;
-	}
+    private String department;
+
+    Staff(int id, String username, String password, String name, String email, String department) {
+        super(id, username, password, name, email);
+        this.department = department;
+    }
+
+    String getDepartment() {
+        return department;
+    }
+
+    void setDepartment(String department) {
+        this.department = department;
+    }
+
+    // This overrides the abstract method in User
+    @Override
+    public String toString() {
+        return "Staff ID: " + getId() +
+                "\nUsername: " + getUsername() +
+                "\nName: " + getName() +
+                "\nEmail: " + getEmail() +
+                "\nDepartment: " + department;
+    }
+}
+
+class Login{
+
+    private static final String PATIENT_FILE = "src/patient.csv";
+    private static final String STAFF_FILE = "src/medicalstaff.csv";
+
+    static Manager login(Scanner scan){ //I updated the file chacking code to not have to check too many conditionals. I deleted the booleans
+
+        System.out.print("Enter username: ");
+        String username = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+
+
+        /* reads through both files and checks boolean values if there is a match*/
+
+        //reads through patients file
+        String file = PATIENT_FILE; // change before submitting
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                String[] info = line.split(",");
+
+                if (info.length >= 6 && username.equals(info[1]) && password.equals(info[2])) {
+                    System.out.println("Login successful as Patient!");
+
+                    Patient patient = new Patient(Integer.parseInt(info[0]), info[1], info[2], info[3], info[4], info[5]);
+
+                    // Patient Manager created with the logged-in Patient
+                    return new Manager(0, patient, patient);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading patient file: " + e.getMessage());
+        }
+
+        //reads through staff file
+        file = STAFF_FILE;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                String[] info = line.split(",");
+
+                if (info.length >= 6 && username.equals(info[1]) && password.equals(info[2])) {
+                    System.out.println("Login successful as Medical Staff!");
+
+                    Staff staff = new Staff(Integer.parseInt(info[0]), info[1], info[2], info[3], info[4], info[5]);
+
+                    // Staff Manager created with the logged-in Staff
+                    return new Manager(1, staff, staff);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading staff file: " + e.getMessage());
+        }
+
+        System.out.println("Login failed: invalid username or password.");
+
+        //returned if somehow no user is found and the system doesn't ask the user to re-enter their username and password
+        User errorUser = new Patient(0, "error", "error", "error", "error", "error");
+        return new Manager(-1, errorUser, errorUser);
+
+    }
+
+
+
+    //I removed the Exception Class, You can add it back if you want but code works without it
+
 }
 
 class Manager{
-	
-	private int userType;
-	private User currentUser;
-	private User currentViewed;
-	ArrayList<Patient> patients = new ArrayList<>();
-	
-	Manager(int userType, User currentUser, User currentViewed) {
-		
-		this.userType = userType;
-		this.currentUser = currentUser;
-		this.currentViewed = currentViewed;
-		
-	}
-	
-	int getUserType() {
-		return userType;
-	}
-	
-	ArrayList<Patient> loadPatients() {
-		//creates array list of all patients
-		String file = "patient.csv"; 
+    private int userType; // 0 = Patient, 1 = Staff, -1 = Error
+    private User currentUser;
+    private User currentViewed;
+    private ArrayList<Patient> patients = new ArrayList<>();
+
+    Manager(int userType, User currentUser, User currentViewed) {
+        this.userType = userType;
+        this.currentUser = currentUser;
+        this.currentViewed = currentViewed;
+    }
+
+    public int getUserType() {
+        return userType;
+    }
+
+    public User getCurrentUser() {
+        return currentUser;
+    }
+
+    public void setCurrentViewed(User user) {
+        currentViewed = user;
+    }
+
+    public User getCurrentViewed() {
+        return currentViewed;
+    }
+
+    //create an arraylist of all patients
+    public ArrayList<Patient> loadPatients() {
+        String file = "src/patient.csv"; // Update path if needed
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                
-            	String[] info = line.split(",");
-            	Patient patient = new Patient(Integer.parseInt(info[0]), info[1], info[2], info[3], info[4], info[5]);
-            	
-            	patients.add(patient);
+                String[] info = line.split(",");
+                if (info.length >= 6) {
+                    Patient patient = new Patient(
+                            Integer.parseInt(info[0]), info[1], info[2], info[3], info[4], info[5]);
+                    patients.add(patient);
+                }
             }
-        }catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error reading patient file: " + e.getMessage());
         }
-        
+
         sortPatients(patients);
-        
-        
-	return patients;	
-	}
-	
-	User getCurrentUser() {
-		return currentUser;
-	}
-	void setCurrentViewed(User user) {
-		currentViewed = user;
-	}
-	User getCurrentViewed() {
-		return currentViewed;
-	}
-	int getCurrentViewedType() {
-		
-		int currentViewedType = -1;
-		
-		
-		if(getCurrentViewed() instanceof Patient) {
-			currentViewedType = 0;
-		}
-		if(getCurrentViewed() instanceof Staff) {
-			currentViewedType = 1;
-		}
-		
-		System.out.println(currentViewedType);
-		
-		return currentViewedType;
-	}
-	
-	void printCurrentViewed(){
-		
-		int userType = getCurrentViewedType();
-		
-		if(userType == 0) {
-		
-			Patient user = (Patient)getCurrentViewed();
-		
-			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getTreatmentNotes());
-		}
-		
-		if(userType == 1) {
-			
-			Staff user = (Staff)getCurrentViewed();
-			
-			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getDepartment());
-		}
 
-	}
-	
-	void printCurrentUser() {
-		int userType = getUserType();
-		
-		if(userType == 0) {
-		
-			Patient user = (Patient)getCurrentUser();
-		
-			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getTreatmentNotes());
-		}
-		
-		if(userType == 1) {
-			
-			Staff user = (Staff)getCurrentUser();
-			
-			System.out.println(user.getid() + " " + user.getName() + " " + user.getEmail() + " " + user.getDepartment());
-		}
-	}
-	
-	void lookupPatient() throws Exception{
-	
-		int id = 0;
-		
-		if(getUserType() == 0) {
-			Exception e = new Exception("Error, only staff can search patient files");
-			throw e;
-		}
-		
-		else {
-			System.out.println("please enter user id: ");
-			Scanner scan = new Scanner(System.in);
-			id = scan.nextInt();
-			
-		}
-		
-		//for testing only, needs to be binary search
-		for(int i = 0; i < patients.size(); i++) {
-			if(patients.get(i).getid() == id) {
-				setCurrentViewed(patients.get(i));
-				break;
-			}
-			//create an exception if no id is found
-		}
-		
+        // If the current user is a Patient, they can only view themselves
+        if (userType == 0) {
+            currentViewed = currentUser;
+        }
 
-		System.out.println(getCurrentViewed());
-		
-		
-		
-		
-		
-	}
-	
-	void editCurrentPatient() {
-		
-	}
-	
-	ArrayList<Patient> sortPatients(ArrayList<Patient> patients){
-		//This part is broken af, supposed to sort patients by their id number from lowest to highest
-		Patient patient = patients.get(0);
-		int lowest = patient.getid();
-		Patient lowestPatient = patients.get(1);
-		Patient temp = patients.get(0);
-		int current = 0;
-		Patient temp2 = patients.get(0);
-		
-		for (int i = 0; i < patients.size(); i++) {
-			patient = patients.get(i);
-			System.out.print(patient.getName() + " ");
-			current = patient.getid();
-			System.out.println(current);
-			
-			for(int j = i+1; j< patients.size(); j++) {
-				
-				temp = patients.get(j);
-				System.out.println("temp - " + temp.getid());
-				
-				if(temp.getid() < lowest) {
-				
-					lowest = patient.getid();
-					temp2 = patient;
-					lowestPatient = temp;
-					
-					
-					patients.set(i, temp);
-					patients.set(j, temp2);
-					
-					
-					
-				}
-				
-			}
-		}
-		
-		
-		return patients;
-	}
-	
+        return patients;
+    }
+
+    // Print profile of currentViewed user
+    public void printCurrentViewed() {
+        System.out.println(currentViewed.toString());
+    }
+
+    // Print profile of currentUser
+    public void printCurrentUser() {
+        System.out.println(currentUser.toString());
+    }
+
+    // Lookup a Patient by ID (Staff only)
+    public void lookupPatient() throws Exception {
+        if (userType == 0) {
+            throw new Exception("Error: Only staff can search patient files.");
+        }
+
+        Scanner scan = new Scanner(System.in);
+        System.out.print("Enter patient ID to search: ");
+        int id = scan.nextInt();
+
+        Patient found = binarySearch(id);
+
+        if (found != null) {
+            setCurrentViewed(found);
+            System.out.println("Patient found:");
+            System.out.println(found.toString());
+        } else {
+            throw new Exception("Patient with ID " + id + " not found.");
+        }
+    }
+
+    // Edit the currently viewed patient if allowed
+    public void editCurrentPatient() {
+        if (!(currentViewed instanceof Patient)) {
+            System.out.println("Currently viewed user is not a patient.");
+            return;
+        }
+
+        // Prevent Patients from editing other Patients
+        if (userType == 0 && !currentUser.equals(currentViewed)) {
+            System.out.println("Patients can only edit their own information.");
+            return;
+        }
+
+        Scanner scan = new Scanner(System.in);
+        Patient patient = (Patient) currentViewed;
+
+        System.out.println("Which attribute would you like to edit?");
+        System.out.println("1 - Name");
+        System.out.println("2 - Email");
+        System.out.println("3 - Password");
+        System.out.println("4 - Treatment Notes");
+        System.out.print("Enter your choice: ");
+
+        int choice = scan.nextInt();
+        scan.nextLine(); // consume newline
+
+        switch (choice) {
+            case 1:
+                System.out.print("Enter new name: ");
+                patient.setName(scan.nextLine());
+                break;
+            case 2:
+                System.out.print("Enter new email: ");
+                patient.setEmail(scan.nextLine());
+                break;
+            case 3:
+                System.out.print("Enter new password: ");
+                patient.setPassword(scan.nextLine());
+                break;
+            case 4:
+                System.out.print("Enter new treatment notes: ");
+                patient.setTreatmentNotes(scan.nextLine());
+                break;
+            default:
+                System.out.println("Invalid choice.");
+                return;
+        }
+
+        savePatientsToFile();
+        System.out.println("Patient information updated successfully.");
+    }
+
+    //sort Patients using selection sort by ID
+    private ArrayList<Patient> sortPatients(ArrayList<Patient> patients) {
+        for (int i = 0; i < patients.size() - 1; i++) {
+            int minIndex = i;
+            for (int j = i + 1; j < patients.size(); j++) {
+                if (patients.get(j).getId() < patients.get(minIndex).getId()) {
+                    minIndex = j;
+                }
+            }
+
+            // Swap
+            if (minIndex != i) {
+                Patient temp = patients.get(i);
+                patients.set(i, patients.get(minIndex));
+                patients.set(minIndex, temp);
+            }
+        }
+        return patients;
+    }
+
+
+    // Binary search for a Patient by ID
+    private Patient binarySearch(int id) {
+        int left = 0;
+        int right = patients.size() - 1;
+
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            int midId = patients.get(mid).getId();
+
+            if (midId == id) {
+                return patients.get(mid);
+            } else if (midId < id) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return null; // Not found
+    }
+
+    // Save patients list back to the file
+    private void savePatientsToFile() {
+        String file = "src/patient.csv"; // Update path if needed
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (Patient p : patients) {
+                writer.write(p.getId() + "," + p.getUsername() + "," + p.getPassword() + "," +
+                        p.getName() + "," + p.getEmail() + "," + p.getTreatmentNotes());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error saving to patient file: " + e.getMessage());
+        }
+    }
+
 }
 
+class Report {
 
+    public static void generateReport(ArrayList<Patient> patients, User currentUser, Scanner scan) {
+        System.out.println("\n--- Report Generator ---");
+        System.out.println("Choose a report to generate:");
+        System.out.println("1 - List of Patients (sorted by ID)");
+        System.out.println("2 - List of Patients (sorted by Name)");
+        System.out.println("3 - List of all emails (alphabetical)");
+        System.out.println("4 - Current user information");
+        System.out.print("Enter your choice: ");
 
-class Login{
-	
-	static Manager login(){
-		Scanner scan = new Scanner(System.in);
-		
-		
-        System.out.println("Enter username: ");
-        String username = scan.nextLine();
-        System.out.println("Enter password: ");
-        String password = scan.nextLine();
-        boolean passwordMatch = false;
-        boolean usernameMatch = false;
+        int choice = scan.nextInt();
+        scan.nextLine(); // for the newline
 
-        /* reads through both files and checks boolean values if there is a match, if both values are true
-         * at the same time, then the user is logged in and a new patient or staff object is created and passed
-         * through a new manager object to the driver class (Assignment3)*/
-        
-        //reads through patients file
-        String file = "patient.csv"; 
+        System.out.print("Enter the filename to save the report (e.g. report.txt): ");
+        String filename = scan.nextLine();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                
-            	String[] info = line.split(",");
-            	
-            	if (username.equals(info[1])) {
-                    usernameMatch = true;
-                } 
-            	else {
-                    usernameMatch = false;
-                }
-            	
-            	if(password.equals(info[2])) {
-            		passwordMatch = true;
-            	}
-            	else {
-                    passwordMatch = false;
-                }
-            	
-            	if(usernameMatch && passwordMatch) {
-            		System.out.println("Successful login");
-            		Patient patient = new Patient(Integer.parseInt(info[0]), info[1],info[2],info[3],info[4],info[5]);
-            		Manager m = new Manager(0, patient,patient);
-            		
-            		return m;
-            		
-            		
-            	}
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            switch (choice) {
+                case 1:
+                    // Sort by ID
+                    ArrayList<Patient> sortedById = new ArrayList<>(patients);
+                    selectionSortById(sortedById);
+                    for (Patient p : sortedById) {
+                        writer.write(p.getId() + " | " + p.getName() + " | " + p.getEmail());
+                        writer.newLine();
+                    }
+                    break;
+
+                case 2:
+                    // Sort by name
+                    ArrayList<Patient> sortedByName = new ArrayList<>(patients);
+                    selectionSortByName(sortedByName);
+                    for (Patient p : sortedByName) {
+                        writer.write(p.getId() + " | " + p.getName() + " | " + p.getEmail());
+                        writer.newLine();
+                    }
+                    break;
+
+                case 3:
+                    // Sort emails alphabetically
+                    ArrayList<String> emails = new ArrayList<>();
+                    for (Patient p : patients) {
+                        emails.add(p.getEmail());
+                    }
+                    selectionSortStrings(emails);
+                    for (String email : emails) {
+                        writer.write(email);
+                        writer.newLine();
+                    }
+                    break;
+
+                case 4:
+                    // Print current user info
+                    writer.write(currentUser.toString());
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. No report generated.");
+                    return;
             }
-            
-            
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
-        }
-        
-        //reads through staff file
-        file = "medicalstaff.csv"; 
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                
-            	String[] info = line.split(",");
-            	
-            	if (username.equals(info[1])) {
-                    usernameMatch = true;
-                } 
-            	else {
-                    usernameMatch = false;
-                }
-            	
-            	if(password.equals(info[2])) {
-            		passwordMatch = true;
-            	}
-            	else {
-                    passwordMatch = false;
-                }
-            	
-            	if(usernameMatch && passwordMatch) {
-            		System.out.println("Successful login");
-            		Staff staff = new Staff(Integer.parseInt(info[0]), info[1],info[2],info[3],info[4],info[5]);
-            		Manager m = new Manager(1, staff,staff);
-            		
-            		System.out.println(staff instanceof Staff);
-            		
-            		
-            		return m;
-            		
-            		
-            		
-            	}
-            }
-            
-            
+            System.out.println("Report successfully saved to " + filename);
         } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
+            System.err.println("Error writing report: " + e.getMessage());
         }
-        
-        //returned if somehow no user is found and the system doesn't ask the user to re-enter their username and password
-        User error = new Patient(000, "error","error","error","error","error");
-		Manager m = new Manager(-1, error,error);
-		
-		return m;
-        
-	}
-	
-	
-	
-	class Exception{
-		
-		String s;
-		
-		Exception(String s){
-			this.s = s;
-		}
-	}
-	
+    }
+
+    // Reuse the sorting style for ID
+    private static void selectionSortById(ArrayList<Patient> list) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            int minIndex = i;
+            for (int j = i + 1; j < list.size(); j++) {
+                if (list.get(j).getId() < list.get(minIndex).getId()) {
+                    minIndex = j;
+                }
+            }
+            Patient temp = list.get(i);
+            list.set(i, list.get(minIndex));
+            list.set(minIndex, temp);
+        }
+    }
+
+    // Sort by name
+    private static void selectionSortByName(ArrayList<Patient> list) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            int minIndex = i;
+            for (int j = i + 1; j < list.size(); j++) {
+                if (list.get(j).getName().compareToIgnoreCase(list.get(minIndex).getName()) < 0) {
+                    minIndex = j;
+                }
+            }
+            Patient temp = list.get(i);
+            list.set(i, list.get(minIndex));
+            list.set(minIndex, temp);
+        }
+    }
+
+    // Sort strings (emails)
+    private static void selectionSortStrings(ArrayList<String> list) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            int minIndex = i;
+            for (int j = i + 1; j < list.size(); j++) {
+                if (list.get(j).compareToIgnoreCase(list.get(minIndex)) < 0) {
+                    minIndex = j;
+                }
+            }
+            String temp = list.get(i);
+            list.set(i, list.get(minIndex));
+            list.set(minIndex, temp);
+        }
+    }
 }
-
-
-	
