@@ -12,7 +12,7 @@ class FilePaths {
     public static String REPORT_FOLDER = "src/"; // Save reports to src by default
 }
 
-public class HospitalManager {
+public class Assignment3 {
 
     public static void main(String[] args) {
         Scanner scan = new Scanner(System.in);
