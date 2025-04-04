@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
+class FilePaths {
+    public static String PATIENT_FILE = "src/patient.csv";
+    public static String STAFF_FILE = "src/medicalstaff.csv";
+    public static String REPORT_FOLDER = "src/"; // Save reports to src by default
+}
 
 public class HospitalManager {
 
@@ -39,12 +44,12 @@ public class HospitalManager {
         if (m.getUserType() == 1) {
             patients = m.loadPatients();
 
-            System.out.println("\n--- Loaded Patients ---");
-            for (Patient p : patients) {
-                System.out.println(p.getId() + " | " + p.getUsername() + " | " +
-                        p.getPassword() + " | " + p.getName() + " | " + p.getEmail() +
-                        " | " + p.getTreatmentNotes());
-            }
+//            System.out.println("\n--- Loaded Patients ---");
+//            for (Patient p : patients) {
+//                System.out.println(p.getId() + " | " + p.getUsername() + " | " +
+//                        p.getPassword() + " | " + p.getName() + " | " + p.getEmail() +
+//                        " | " + p.getTreatmentNotes());
+//            }
         }
 
         //printing for testing purposes
@@ -67,8 +72,8 @@ public class HospitalManager {
             System.out.println("1 - View current user's profile");
             System.out.println("2 - Look up a specific patient (staff only)");
             System.out.println("3 - Edit current user");
-            System.out.println("4 - Sign out");
-            System.out.println("5 - Generate report");
+            System.out.println("4 - Generate report");
+            System.out.println("5 - Sign out");
             System.out.print("Enter choice: ");
 
             while (!scan.hasNextInt()) {
@@ -94,19 +99,19 @@ public class HospitalManager {
                     m.editCurrentPatient();
                     break;
                 case 4:
-                    System.out.println("Signing out. Goodbye!");
-                    break;
-                case 5:
                     if (patients == null || patients.isEmpty()) {
                         System.out.println("No patients loaded. Only staff can generate full reports.");
                     } else {
                         Report.generateReport(patients, m.getCurrentUser(), scan);
                     }
                     break;
+                case 5:
+                    System.out.println("Signing out. Goodbye!");
+                    break;
                 default:
                     System.out.println("Invalid choice. Please select a number between 1 and 4.");
             }
-        } while (choice != 4);
+        } while (choice != 5);
     }
 }
 
@@ -126,41 +131,16 @@ abstract class User {
         this.email = email;
     }
 
-    // Getters
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public String getUsername() { return username; }
+    public String getPassword() { return password; }
+    public String getName() { return name; }
+    public String getEmail() { return email; }
 
-    public String getUsername() {
-        return username;
-    }
+    public void setPassword(String password) { this.password = password; }
+    public void setName(String name) { this.name = name; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    // Setters
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    // Used to return a formatted string of user info
     public abstract String toString();
 }
 
@@ -222,8 +202,8 @@ class Staff extends User {
 
 class Login{
 
-    private static final String PATIENT_FILE = "src/patient.csv";
-    private static final String STAFF_FILE = "src/medicalstaff.csv";
+//    private static final String PATIENT_FILE = "src/patient.csv";
+//    private static final String STAFF_FILE = "src/medicalstaff.csv";
 
     static Manager login(Scanner scan){ //I updated the file chacking code to not have to check too many conditionals. I deleted the booleans
 
@@ -236,19 +216,13 @@ class Login{
         /* reads through both files and checks boolean values if there is a match*/
 
         //reads through patients file
-        String file = PATIENT_FILE; // change before submitting
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+//String file = PATIENT_FILE; // change before submitting
+        try (BufferedReader reader = new BufferedReader(new FileReader(FilePaths.PATIENT_FILE))) {
             String line;
-
             while ((line = reader.readLine()) != null) {
                 String[] info = line.split(",");
-
                 if (info.length >= 6 && username.equals(info[1]) && password.equals(info[2])) {
-                    System.out.println("Login successful as Patient!");
-
                     Patient patient = new Patient(Integer.parseInt(info[0]), info[1], info[2], info[3], info[4], info[5]);
-
-                    // Patient Manager created with the logged-in Patient
                     return new Manager(0, patient, patient);
                 }
             }
@@ -257,20 +231,13 @@ class Login{
         }
 
         //reads through staff file
-        file = STAFF_FILE;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(FilePaths.STAFF_FILE))) {
             String line;
-
             while ((line = reader.readLine()) != null) {
                 String[] info = line.split(",");
-
                 if (info.length >= 6 && username.equals(info[1]) && password.equals(info[2])) {
-                    System.out.println("Login successful as Medical Staff!");
-
                     Staff staff = new Staff(Integer.parseInt(info[0]), info[1], info[2], info[3], info[4], info[5]);
-
-                    // Staff Manager created with the logged-in Staff
                     return new Manager(1, staff, staff);
                 }
             }
@@ -285,10 +252,7 @@ class Login{
         return new Manager(-1, errorUser, errorUser);
 
     }
-
-
-
-    //I removed the Exception Class, You can add it back if you want but code works without it
+        //I removed the Exception Class, You can add it back if you want but code works without it
 
 }
 
@@ -322,9 +286,10 @@ class Manager{
 
     //create an arraylist of all patients
     public ArrayList<Patient> loadPatients() {
-        String file = "src/patient.csv"; // Update path if needed
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FilePaths.PATIENT_FILE))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] info = line.split(",");
@@ -361,7 +326,7 @@ class Manager{
     // Lookup a Patient by ID (Staff only)
     public void lookupPatient() throws Exception {
         if (userType == 0) {
-            throw new Exception("Error: Only staff can search patient files.");
+            throw new Exception("Access denied: only staff can view patient files.");
         }
 
         Scanner scan = new Scanner(System.in);
@@ -375,9 +340,10 @@ class Manager{
             System.out.println("Patient found:");
             System.out.println(found.toString());
         } else {
-            throw new Exception("Patient with ID " + id + " not found.");
+            System.out.println("Patient with ID " + id + " not found.");
         }
     }
+
 
     // Edit the currently viewed patient if allowed
     public void editCurrentPatient() {
@@ -387,10 +353,12 @@ class Manager{
         }
 
         // Prevent Patients from editing other Patients
-        if (userType == 0 && !currentUser.equals(currentViewed)) {
-            System.out.println("Patients can only edit their own information.");
+        if (userType == 0 && currentUser != currentViewed) {
+            System.out.println("Patients can only edit their own profile.");
             return;
         }
+
+
 
         Scanner scan = new Scanner(System.in);
         Patient patient = (Patient) currentViewed;
@@ -475,7 +443,11 @@ class Manager{
 
     // Save patients list back to the file
     private void savePatientsToFile() {
-        String file = "src/patient.csv"; // Update path if needed
+        if (patients == null || patients.isEmpty()) {
+            System.out.println("Nothing to save.");
+            return;
+        }
+        String file = "src/patient.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             for (Patient p : patients) {
@@ -603,3 +575,4 @@ class Report {
         }
     }
 }
+
